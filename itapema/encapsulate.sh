@@ -10,3 +10,6 @@ for f in *.aac; do
 
 done
 
+echo
+echo "   ONLY picard CAN SEPARATE THE WHEAT FROM THE TARE.  "
+echo
