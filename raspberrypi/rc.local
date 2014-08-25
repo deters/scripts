@@ -1,0 +1,19 @@
+/home/pi/scripts/start.sh
+/home/pi/scripts/fastnet.sh
+/home/pi/scripts/standby.sh
+
+# Print the IP address
+
+_IP=$(hostname -I) || true
+if [ "$_IP" ]; then
+  printf "My IP address is %s\n" "$_IP"
+fi
+
+echo
+echo
+echo
+echo ' Bom dia Lucas! Aproveite a musica!';
+echo
+echo
+echo
+
