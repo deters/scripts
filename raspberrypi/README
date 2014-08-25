@@ -1,0 +1,36 @@
+
+ Este conjunto de scripts permite integrar o servidor AirPort (shairport) com uma TV ligada via HDMI em um RaspberryPI.
+
+ Quando o Ipad se conecta ao shairport instalado no RaspberryPI, a TV é ligada automaticamente e troca de entrada para buscar o som do raspberry pi.
+
+ Após 30 segundos de inatividade do som do ipad, a TV volta a exibir a programação da TV a cabo.
+
+ Instalação:
+
+   1. fazer download, e compilar e instalar o aplicativo CEC-CLIENT no raspberry pi.
+
+   2. copiar os scripts desta pasta para o diretório /home/pi/scripts
+
+   3. adicionar as seguintes linhas no arquivo /etc/rc.local:
+
+# Create a FIFO to receive commands and send to CEC-CLIENT
+/home/pi/scripts/prepare.sh
+
+# switch TV input to cable box (if someone turn on the TV, the input will be at cable box).
+/home/pi/scripts/cable.sh
+
+# standby the TV...
+/home/pi/scripts/standby.sh
+
+# Print the IP address
+
+_IP=$(hostname -I) || true
+if [ "$_IP" ]; then
+  printf "My IP address is %s\n" "$_IP"
+fi
+
+
+   4. Adicionar as seguintes linhas no arquivo /etc/default/shairport:
+
+RUN_ONSTART=/home/pi/scripts/shairport_start.sh
+RUN_ONSTOP=/home/pi/scripts/shairport_stop.sh 
