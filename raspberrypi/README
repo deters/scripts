@@ -1,13 +1,14 @@
+ Estes scripts permitem conectar o áudio de um ipad ou iphone diretamente em uma TV que esteja ligada a um raspberry pi via cabo HDMI.
+ 
+ A TV será ligada (se necessário) e sintonizada no áudio automaticamente sempre que se iniciar uma transmissão do IPAD. 
 
- Este conjunto de scripts permite integrar o servidor AirPort (shairport) com uma TV ligada via HDMI em um RaspberryPI.
-
- Quando o Ipad se conecta ao shairport instalado no RaspberryPI, a TV é ligada automaticamente e troca de entrada para buscar o som do raspberry pi.
-
- Após 30 segundos de inatividade do som do ipad, a TV volta a exibir a programação da TV a cabo.
+ Depois de encerrada a transmissão de áudio do Ipad, a TV será redirecionada de volta para exigir a programação da TV a cabo.
 
  Instalação:
 
    1. fazer download, e compilar e instalar o aplicativo CEC-CLIENT no raspberry pi.
+
+   2. instalar o aplicativo shairport no raspberry pi
 
    2. copiar os scripts desta pasta para o diretório /home/pi/scripts
 
