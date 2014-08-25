@@ -3,22 +3,39 @@ playlist.py:
 -------------
 um script python que lista as músicas que tocaram na rádio Itapema em uma determinada data
 
+ Requisitos: python python-beautifulsoup
+
+ Uso: 
+    ./playlist.py 25082014 00:00 23:59 > lista.txt
+
+
 youtube.py: 
 ---------------
 um script python que a partir de uma lista busca no youtube os vídeos correspondentes, fazendo o download de cada vídeo e extraindo o seu fluxo de áudio em formato AAC sem perda de qualidade.
+
+ Requisitos: python, youtube-dl
+
+ Uso: ./youtube.py < lista.txt
               
 encapsulate.sh: 
 --------------------
 um script shell que lê arquivos de fluxo de áudio AAC no diretório atual e os encapsula em um container MP4
+
+ Requisitos: gpac (MP4Box)
+
+ Uso: ./encapsulate.sh
                
 Bônus:
 
-picard:
+picard ( https://musicbrainz.org/doc/MusicBrainz_Picard )
 ---------
-Um ótimo programa capaz de identificar, rotular e organizar de forma automática arquivos MP4 com base em um banco de dados público. 
-https://musicbrainz.org/doc/MusicBrainz_Picard
+Um ótimo programa capaz de identificar, rotular e organizar de forma automática arquivos MP4 com base em um banco de dados público. Infelizmente a documentação
+informa que não suporta linha de comando.
 
-aacgain:
+ Pacote: picard
+
+aacgain ( http://aacgain.altosdesign.com/ )
 --------
 Um ótimo programa para normalizar o volume em arquivos mp4.
-http://aacgain.altosdesign.com/
+
+ Pacote: aacgain
