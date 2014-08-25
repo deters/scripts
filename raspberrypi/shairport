@@ -1,0 +1,6 @@
+# add this lines to the end of /etc/default/shairport
+
+RUN_ONSTART=/home/pi/scripts/shairport_start.sh
+
+RUN_ONSTOP=/home/pi/scripts/shairport_stop.sh
+
