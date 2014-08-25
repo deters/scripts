@@ -1,5 +1,14 @@
+
+# This commands need to be added to rc.local@pi
+
+
+# Create a FIFO to receive commands and send to CEC-CLIENT
 /home/pi/scripts/start.sh
+
+# switch TV input to cable box (if someone turn on the TV, the input will be at cable box).
 /home/pi/scripts/fastnet.sh
+
+# standby the TV...
 /home/pi/scripts/standby.sh
 
 # Print the IP address
