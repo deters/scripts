@@ -21,9 +21,9 @@ semaphore = require('semaphore')          // Deezer api has a very low usage quo
 
 var request = require('request');
 
-// Due to Deezer usage quotas, the limit will be 50 requests for 5 seconds.
-let DEEZER_QUOTA_REQUESTS=50
-let DEEZER_QUOTA_TIME=5
+// Due to Deezer usage quotas, the limit will be 10 requests per secound
+let DEEZER_QUOTA_REQUESTS=10
+let DEEZER_QUOTA_TIME=1
 
 // use a semaphore to limit the simulatenous quota requests.
 
@@ -69,6 +69,8 @@ app.get('/', (req, res) => {
 
 
 function itapema_list_musics_from_date(date) {
+
+	console.log('itapema_list_musics_from_date ',date);
 
 
 	return new Promise( (resolve, reject) => {
@@ -120,12 +122,16 @@ function itapema_list_musics_from_date(date) {
 		    if (!error) {
 			var $ = cheerio.load(html);
 
-			$('table.grade tbody').filter(function(){
-				var tbody = $(this);
+			$('table.grade tbody').each( (index, value) => {
 
-				tbody.children().each( function(i,e) {
-					var tr = $(this);
 
+				let tbody = $(value);
+
+
+				$('tr', tbody).each ( (index, value) => {
+
+					let tr = $(value);
+										
 					var musica = { playlist: '', cantor: '', musica: '', disco: ''}
 
 					musica.horario = tr.children().first().text();
@@ -148,7 +154,7 @@ function itapema_list_musics_from_date(date) {
 
 				});
 			});
-
+			
 			resolve(music_list);
 
 		    } else {
@@ -350,7 +356,7 @@ function deezer_music_search(token, cantor, musica){
 						let music = result.data[0];
 						resolve(music);
 					} else {
-						reject('music not found');
+						reject('music not found', err);
 					}
 				}
 			});
@@ -370,71 +376,115 @@ function deezer_music_search(token, cantor, musica){
 
 
 
-function deezer_playlist_tracks(token, playlist_id, callback){
-
-	let url = 'http://api.deezer.com/playlist/'+playlist_id+'/tracks?limit=10000&access_token='+token;
-
-	http_get_json(url, (err, result)=> {
-				callback(err, result.data);
-	});
-}
+function deezer_playlist_tracks(token, playlist_id){
 
 
+	console.log('deezer_playlist_tracks',token, playlist_id);
 
-function deezer_playlist_sort(token, playlist_id, order, callback) {
+	return new Promise( (resolve, reject) => {
 
-	// cria uma playlist 
-	deezer.request(
-		token, 
-		{
-		      resource: 'playlist/'+playlist_id+'/tracks',
-		      method: 'post',
-		      fields: {
-			order: order
-		      }
-		},
-		(err, result) => {
-			if (result) {
-				callback(err, result);
+		let url = 'http://api.deezer.com/playlist/'+playlist_id+'/tracks?limit=10000&access_token='+token;
+
+		http_get_json(url, (err, result) => {
+			if (err) { 
+				reject(err);
+			} else {
+				resolve(result.data);
 			}
-		}
-	);
+		});
 
+	});
 }
 
 
-function sort(token, playlist_id, callback) {
-		
-	deezer_playlist_tracks(token, playlist_id, (err, tracks) => {
-		if (err) {
-			callback(err, null);
-		}
-		let order = tracks.sort((t1,t2)=>{return Math.random() > 0.5 ? 1 :-1 }).map((track)=>{ return track.id}).reduce( (a,b)=> {return a+','+b;});
-		deezer_playlist_sort(token, playlist_id, order, (err, result) => {
-			callback(err, result);
-		});
-		
+
+function deezer_playlist_sort(token, playlist_id, order) {
+
+	console.log('deezer_playlist_sort', playlist_id);
+
+	return new Promise( (resolve, reject) => {
+
+		// cria uma playlist 
+		deezer.request(
+			token, 
+			{
+			      resource: 'playlist/'+playlist_id+'/tracks',
+			      method: 'post',
+			      fields: {
+				order: order
+			      }
+			},
+			(err, result) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(result);
+				}
+			}
+		);
+
+
+
 	});
 
 }
 
 
-function deezer_playlist_music_add(token, playlist_id, music_id, callback) {
+function sort_playlist(token, playlist_id) {
 
-	deezer.request(
-		token, 
-		{
-		      resource: 'playlist/'+playlist_id+'/tracks',
-		      method: 'post',
-		      fields: {
-				songs: music_id
+	console.log('SORT_PLAYLIST', playlist_id);
+
+
+	return new Promise( (resolve, reject) => {
+
+		let tracks_promise = deezer_playlist_tracks(token, playlist_id);
+
+		tracks_promise.then( (tracks) => {
+
+			console.log('TRACKS = ',tracks.length);
+			
+			let new_order = tracks.sort((t1,t2)=>{return Math.random() > 0.5 ? 1 :-1 }).map((track)=>{ return track.id}).reduce( (a,b)=> {return a+','+b;});
+
+			deezer_playlist_sort(token, playlist_id, new_order)
+			.then(resolve)
+			.catch(reject);
+		
+		}).catch(reject);
+
+	});
+
+}
+
+
+function deezer_playlist_music_add(token, playlist_id, music_id) {
+
+	console.log('deezer_playlist_music_add ', music_id);
+
+
+	return new Promise( (resolve, reject) => {
+
+		deezer.request(
+			token, 
+			{
+			      resource: 'playlist/'+playlist_id+'/tracks',
+			      method: 'post',
+			      fields: {
+					songs: music_id
+					}
+		              
+			},
+			(err, results) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(results);
 				}
-                      
-		},
-		(err, results) => {
-			callback(err, results.data);
-		}
-	);
+			}
+
+		);
+
+	});
+
 
 }
 
@@ -497,102 +547,129 @@ function deezer_get_playlist(token, name) {
 }
 
 
+function get_music_from_deezer(music) {
 
 
 
+}
+
+
+
+function get_playlist(playlists, playlist_name, token) {
+
+
+	let playlist_promise =  playlists.get(playlist_name);
+
+	if (!playlist_promise) {
+
+		playlist_promise = deezer_get_playlist( token, playlist_name );
+		playlists.set( playlist_name, playlist_promise );
+
+	}
+
+	return playlist_promise;
+}
+
+function import_music_to_deezer(music, playlists, token) {
+
+	console.log('import_music_to_deezer ',music.musica);
+
+	return new Promise((resolve, reject) => {
+
+//		console.log('From itapema: ',music.musica);
+
+		sem1.take(()=>{
+
+			console.log('SEMAPHORE',music.musica);
+
+			setTimeout(sem1.leave, DEEZER_QUOTA_TIME * 1000);
+
+			let playlist_promise = get_playlist(playlists, music.playlist, token);
+
+
+			playlist_promise.then((playlist) => {
+
+
+				deezer_music_search(token, music.cantor, music.musica)
+				.then( (m) => {
+
+						console.log('has playlist.', playlist.title);
+
+						deezer_playlist_music_add(token, playlist.id, m.id)
+						.catch((err)=>{console.log(err)}).then( resolve );
+
+
+
+				}).catch((err)=>{console.log(err); resolve(null)});
+
+			}).catch( reject );
+
+		
+
+		});
+	});
+}
+
+
+function import_musics_to_deezer(music_list, token){
+
+	console.log('import_musics_to_deezer ',music_list.length);
+
+
+	return new Promise( (resolve, reject) => {
+		
+		let playlists = new Map();
+
+		let music_added_promise_list = music_list.map( (music) => {
+
+			return import_music_to_deezer(music, playlists, token);
+
+		});
+
+		Promise.all( music_added_promise_list ).catch( err => console.log('Error on music add: ', err)).then( () => { resolve(playlists) });
+
+	});
+}
+
+
+
+function sort_playlists(playlists, token) {
+
+	console.log('sort_palylists ', playlists.length);
+
+
+	return new Promise( (resolve, reject) => {
+
+		let sort_promises = [];
+
+		playlists.forEach( (playlist_promise) => {
+
+			playlist_promise.then( (playlist) => {
+
+				sort_promises.push(sort_playlist(token, playlist.id));
+
+			}).catch(reject);
+		});
+
+		Promise.all(sort_promises).then( () => {
+			resolve(playlists);	
+		}).catch(reject);
+
+		
+
+	});
+}
 
 
 function run(token, date){
 
 	console.log('Using token: ',token);
 
-	let playlists = new Map();
-
-
-	itapema_list_musics_from_date( date ).catch((err)=>{ console.log('err parsing music list: ',err); }).then( (music_list) => {
-
-		let music_added_promise_list = music_list.map( (music) => {
-
-			return new Promise((resolve, reject) => {
-
-				console.log('From itapema: ',music.musica);
-
-				// take a slot in the semaphore
-
-				sem1.take(()=>{
-
-					// release it after some time.
-
-					setTimeout(sem1.leave, DEEZER_QUOTA_TIME * 1000);
-
-					// search for this music on deezer
-
-					deezer_music_search(token, music.cantor, music.musica).then( (m) => {
-
-						console.log('to Deezer: '+m.id+' as '+music.cantor+' - '+music.musica);
-	
-						let playlist_name = music.playlist;
-
-						let playlist_promise = playlists.get(playlist_name);
-
-						if (!playlist_promise) {
-
-							playlist_promise = deezer_get_playlist( token, playlist_name);
-							playlists.set(playlist_name, playlist_promise);
-
-						}
-
-						playlist_promise.then((playlist) => {
-
-							deezer_playlist_music_add(token, playlist.id, m.id, (err, result) => {
-								if (err) {
-									console.log('err adding music to playlist: ', err);
-									reject(err);
-								} else {
-									console.log('DONE  @ '+playlist.title+': '+music.cantor+' - '+music.musica);
-									resolve('FEITO');
-								}
-							});
-
-
-						}).catch((err)=>{ reject('err getting playlist: '+err); });
-
-					}).catch((e)=>{ resolve('err on deezer music search: '+e)});
-
-				});
-			});
-		});
-
-
-		Promise.all(music_added_promise_list).then((result)=>{
-			console.log('OK PROMISED ',result);
-
-			playlists.forEach( (playlist_promise) => {
-
-				console.log(playlist_promise);
-
-				playlist_promise.then( (playlist) => {
-					sort(token, playlist.id, (err, result) => {
-						if (err) {
-							console.log(err);
-							return;
-						}
-
-						console.log('SHUFFLED PLAYLIST: '+playlist.title);
-					});
-				});
-			});
-
-		}).catch((err)=>{console.log('err', err);}).then((result)=>{
-			console.log('finished!');
-		});
-
-
-	});
-
-
-
-
+	itapema_list_musics_from_date( date )
+	.then ( music_list => import_musics_to_deezer(music_list, token) )
+	.then ( playlists  => sort_playlists(playlists, token) )
+	.then ( playlists  => console.log('Playlists sorteadas: ', playlists.length )  )
+	.catch( err => { console.log('err: ',err); } );
 
 }
 
