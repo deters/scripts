@@ -70,12 +70,9 @@ app.get('/', (req, res) => {
 
 function itapema_list_musics_from_date(date) {
 
-	console.log('itapema_list_musics_from_date ',date);
-
-
 	return new Promise( (resolve, reject) => {
 
-
+	console.log('itapema_list_musics_from_date ',date);
 
 		let music_list = []
 
@@ -383,7 +380,7 @@ function deezer_playlist_tracks(token, playlist_id){
 
 	return new Promise( (resolve, reject) => {
 
-		let url = 'http://api.deezer.com/playlist/'+playlist_id+'/tracks?limit=10000&access_token='+token;
+		let url = 'http://api.deezer.com/playlist/'+playlist_id+'/tracks?limit=100000&access_token='+token;
 
 		http_get_json(url, (err, result) => {
 			if (err) { 
@@ -430,25 +427,32 @@ function deezer_playlist_sort(token, playlist_id, order) {
 }
 
 
-function sort_playlist(token, playlist_id) {
+function sort_playlist(token, playlist_promise) {
 
-	console.log('SORT_PLAYLIST', playlist_id);
 
 
 	return new Promise( (resolve, reject) => {
 
-		let tracks_promise = deezer_playlist_tracks(token, playlist_id);
 
-		tracks_promise.then( (tracks) => {
+		console.log('SORT_PLAYLIST');
 
-			console.log('TRACKS = ',tracks.length);
+		playlist_promise.then( (playlist) => {
+
+
+			let tracks_promise = deezer_playlist_tracks(token, playlist.id);
+
+			tracks_promise.then( (tracks) => {
+
+				console.log('TRACKS = ',tracks.length);
 			
-			let new_order = tracks.sort((t1,t2)=>{return Math.random() > 0.5 ? 1 :-1 }).map((track)=>{ return track.id}).reduce( (a,b)=> {return a+','+b;});
+				let new_order = tracks.sort((t1,t2)=>{return Math.random() > 0.5 ? 1 :-1 }).map((track)=>{ return track.id}).reduce( (a,b)=> {return a+','+b;});
 
-			deezer_playlist_sort(token, playlist_id, new_order)
-			.then(resolve)
-			.catch(reject);
+				deezer_playlist_sort(token, playlist.id, new_order)
+				.then((result) => {resolve(playlist)})
+				.catch(reject);
 		
+			}).catch(reject);
+
 		}).catch(reject);
 
 	});
@@ -458,7 +462,7 @@ function sort_playlist(token, playlist_id) {
 
 function deezer_playlist_music_add(token, playlist_id, music_id) {
 
-	console.log('deezer_playlist_music_add ', music_id);
+//	console.log('deezer_playlist_music_add ', music_id);
 
 
 	return new Promise( (resolve, reject) => {
@@ -572,7 +576,7 @@ function get_playlist(playlists, playlist_name, token) {
 
 function import_music_to_deezer(music, playlists, token) {
 
-	console.log('import_music_to_deezer ',music.musica);
+	//console.log('Waiting to import ',music.musica);
 
 	return new Promise((resolve, reject) => {
 
@@ -580,7 +584,7 @@ function import_music_to_deezer(music, playlists, token) {
 
 		sem1.take(()=>{
 
-			console.log('SEMAPHORE',music.musica);
+			//console.log('Importing ',music.musica);
 
 			setTimeout(sem1.leave, DEEZER_QUOTA_TIME * 1000);
 
@@ -593,10 +597,8 @@ function import_music_to_deezer(music, playlists, token) {
 				deezer_music_search(token, music.cantor, music.musica)
 				.then( (m) => {
 
-						console.log('has playlist.', playlist.title);
-
 						deezer_playlist_music_add(token, playlist.id, m.id)
-						.catch((err)=>{console.log(err)}).then( resolve );
+						.catch((err)=>{console.log(err)}).then( (result) => { console.log('Imported '+ music.musica); resolve(result)} );
 
 
 
@@ -612,8 +614,6 @@ function import_music_to_deezer(music, playlists, token) {
 
 
 function import_musics_to_deezer(music_list, token){
-
-	console.log('import_musics_to_deezer ',music_list.length);
 
 
 	return new Promise( (resolve, reject) => {
@@ -639,26 +639,15 @@ function sort_playlists(playlists, token) {
 
 
 	return new Promise( (resolve, reject) => {
-
 		let sort_promises = [];
-
 		playlists.forEach( (playlist_promise) => {
-
-			playlist_promise.then( (playlist) => {
-
-				sort_promises.push(sort_playlist(token, playlist.id));
-
-			}).catch(reject);
+			sort_promises.push(sort_playlist(token, playlist_promise));
 		});
-
-		Promise.all(sort_promises).then( () => {
-			resolve(playlists);	
-		}).catch(reject);
-
-		
-
+		Promise.all(sort_promises).then( resolve ).catch(reject);
 	});
 }
+
+
 
 
 function run(token, date){
@@ -689,17 +678,7 @@ var server = app.listen(3000, () => {
 
 
 	let credentials = config_get_credentials();
-/*
-	sort(credentials.accessToken, 3368767706, (err, result)=>{
-		if (err) {
-			console.log('err sorting playlist '+err);
-		}
-		console.log('playlist sorted: ',result);
-	});
 
-
-	return;
-*/
 	process.argv.slice(2).forEach(function (val, index, array) {
 		let credentials = config_get_credentials();
 		run(credentials.accessToken, val);
@@ -709,5 +688,4 @@ var server = app.listen(3000, () => {
 
 // need to test without this... i did it because server requests 
 server.timeout = server.timeout * 20;
-
 
