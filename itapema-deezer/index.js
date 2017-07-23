@@ -401,14 +401,13 @@ function deezer_playlist_sort(token, playlist_id, order) {
 
 	return new Promise( (resolve, reject) => {
 
-		// cria uma playlist 
 		deezer.request(
 			token, 
 			{
 			      resource: 'playlist/'+playlist_id+'/tracks',
 			      method: 'post',
 			      fields: {
-				order: order
+						order: order
 			      }
 			},
 			(err, result) => {
@@ -672,20 +671,34 @@ app.get('/run', function (req, res) {
 
 });
 
-
-var server = app.listen(3000, () => {  
-	console.log('Example app listening on port 3000!');
-
+if (process.argv[2] == 'run'){
 
 	let credentials = config_get_credentials();
 
-	process.argv.slice(2).forEach(function (val, index, array) {
+	if (process.argv.length == 3){
+		let yesterday = dateFormat((new Date).setDate(new Date().getDate()-1), "ddmmyyyy");
 		let credentials = config_get_credentials();
-		run(credentials.accessToken, val);
-	});
-});
+		run(credentials.accessToken, yesterday);
 
+	} else {
+
+		process.argv.slice(3).forEach(function (val, index, array) {
+			let credentials = config_get_credentials();
+			run(credentials.accessToken, val);
+		});
+	
+	}
+	
+} else {
+
+	let server = app.listen(3000, () => {  
+		console.log('Example app listening on port 3000!');
+	});
+	
+	server.timeout = server.timeout * 20;
+
+}
 
 // need to test without this... i did it because server requests 
-server.timeout = server.timeout * 20;
+
 
