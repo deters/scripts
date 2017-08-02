@@ -40,9 +40,9 @@ if len(sys.argv) > 1:
 from BeautifulSoup import BeautifulSoup as BS
 import urllib2
 
-html = urllib2.urlopen('http://www.clicrbs.com.br/especial/sc/itapemafmsc/65,434,15,2,5,2,'+ DATE +',PlayList.html')
-
-soup = BS(html)
+response = urllib2.urlopen('http://www.clicrbs.com.br/especial/sc/itapemafmsc/65,434,15,2,5,2,'+ DATE +',PlayList.html')
+content = response.read().decode('latin1')
+soup = BS(content)
 elem = soup.findAll('tr')
 for e in elem:
     tds = e.findAll('td')
@@ -50,7 +50,7 @@ for e in elem:
         music=tds[1].text
         artist=tds[2].text.split('(')[0]
         time=tds[0].text
-        content=artist+' - '+music
+        content=u''+artist+' - '+music
         if 'Vinheta'.upper() not in content.upper() and 'Itapema'.upper() not in content.upper():
             if time >= START_TIME and time <= END_TIME:
-                print content
+                print content.encode('utf8')
