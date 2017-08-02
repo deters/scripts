@@ -373,6 +373,41 @@ function deezer_music_search(token, cantor, musica){
 
 
 
+function deezer_get_track(token, music_id){
+
+	let result = new Promise( (resolve, reject) => {
+
+		try {
+
+			let url = 'http://api.deezer.com/track/'+music_id+'?access_token='+token;
+
+			http_get_json(url, (err, result)=> {
+				
+				if (err) {
+					reject(err);
+				} else {
+					let track = result;
+					resolve(track);
+				}
+			});
+
+		} catch (err) {
+			reject(err);
+		}
+
+
+	});
+
+
+	return result;
+
+}
+
+
+
+
+
+
 function deezer_playlist_tracks(token, playlist_id){
 
 
@@ -587,24 +622,41 @@ function import_music_to_deezer(music, playlists, token) {
 
 			setTimeout(sem1.leave, DEEZER_QUOTA_TIME * 1000);
 
-			let playlist_promise = get_playlist(playlists, music.playlist, token);
 
 
-			playlist_promise.then((playlist) => {
+			deezer_music_search(token, music.cantor, music.musica)
+			.then( (m) => {
+
+				let playlist_promise = get_playlist(playlists, music.playlist, token);
 
 
-				deezer_music_search(token, music.cantor, music.musica)
-				.then( (m) => {
+				playlist_promise.then((playlist) => {
 
-						deezer_playlist_music_add(token, playlist.id, m.id)
-						.catch((err)=>{console.log(err)}).then( (result) => { console.log('Imported '+ music.musica); resolve(result)} );
+					let track_promise = deezer_get_track(token, m.id);
+					
+					track_promise.then( track => {
+						
+						if ((track.isrc + '--').substr(0,2) == 'BR') {
+							let brplaylist_promise = get_playlist(playlists, 'Itapema - Brasil', token);	
+							
+							brplaylist_promise.then( (playlist) => {
+							
+								deezer_playlist_music_add(token, playlist.id, m.id)
+								.catch((err)=>{console.log(err)}).then( (result) => { console.log('Imported BR '+ music.musica); resolve(result)} );							
+								
+							} ).catch( err => console.log('err br ='+err) );
+									
+							
+						}
+						
+					} ).catch( err => console.log('err='+err) );
 
+					deezer_playlist_music_add(token, playlist.id, m.id)
+					.catch((err)=>{console.log(err)}).then( (result) => { console.log('Imported '+ music.musica); resolve(result)} );
 
+				}).catch( reject );
 
-				}).catch((err)=>{console.log(err); resolve(null)});
-
-			}).catch( reject );
-
+			}).catch((err)=>{console.log(err); resolve(null)});
 		
 
 		});
