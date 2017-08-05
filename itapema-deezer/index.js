@@ -142,33 +142,35 @@ function http_post_json(path, data, callback) {
 	});
 }
 
-function http_get(url, callback) {
-	http.get(url, function(res) {
-	    var content = '';
-	    res.on('data', function(chunk) {
-		content += chunk;
-	    });
-	    res.on('end', function() {
-		let result = content;
-		callback(result.error, result);
-
-	    });
-	}).on('error', function(e) {
-	    console.log("Got error on get: " + e.message);
+function http_get(url) {
+	return new Promise( (resolve, reject) => {
+		http.get(url, function(res) {
+			var content = '';
+			res.on('data', function(chunk) {
+			content += chunk;
+			});
+			res.on('end', function() {
+			resolve(content);
+			});
+		}).on('error', function(e) {
+			reject(e);
+		});
 	});
 }
 
-function http_get_json(url, callback) {
-	http_get(url, (err, content) => {
-		callback(err, JSON.parse(content));
+function http_get_json(url) {
+	return new Promise( (resolve, reject) => {
+		http_get(url).then( (content) => resolve(JSON.parse(content)) ).catch(reject);
 	});
 }
 
-function deezer_get_access_token(appId, appSecret, code, callback){
-	let url='http://connect.deezer.com/oauth/access_token.php?app_id='+appId+'&secret='+appSecret+'&code='+code;
-	http_get(url, (err, result) => {
-		let accessToken = result.replace(/.*access_token=/,'').replace(/&.*/,'');
-		callback(err, {accessToken: accessToken});
+function deezer_get_access_token(appId, appSecret, code){
+	return new Promise( (resolve, reject) => {
+		let url='http://connect.deezer.com/oauth/access_token.php?app_id='+appId+'&secret='+appSecret+'&code='+code;
+		http_get(url).then( result => {
+			let accessToken = result.replace(/.*access_token=/,'').replace(/&.*/,'');
+			resolve( {accessToken: accessToken} );
+		}).catch(reject);
 	});
 }
 
@@ -221,18 +223,11 @@ function config_get_credentials() {
 }
 
 function deezer_get_user(token){
-	let url = 'http://api.deezer.com/user/me?access_token='+token;
-	console.log(url);
-	let user_promise = new Promise( (resolve, reject) => {
-		http_get_json(url, (err, result)=> {
-			if (err) {
-				reject(err);
-			} else {
-				resolve(result);
-			}
-		});
+	return new Promise( (resolve, reject) => {
+		let url = 'http://api.deezer.com/user/me?access_token='+token;
+		console.log(url);
+		http_get_json(url).then (resolve).catch(reject);
 	});
-	return user_promise;
 }
 
 function deezer_create_playlist(token, title, callback) {
@@ -254,58 +249,37 @@ function deezer_create_playlist(token, title, callback) {
 }
 
 function deezer_music_search(token, cantor, musica){
-	let result = new Promise( (resolve, reject) => {
-		try {
-			let url = 'http://api.deezer.com/search?limit=1&access_token='+token+'&q=artist:"'+cantor.replace(/[\"']/g, ' ').replace(/ e .*/g, '')+'" track:"'+ musica.replace(/[\"']/g, ' ') +'"';
-			http_get_json(url, (err, result)=> {
-				if (err) {
-					reject(err);
+	return new Promise( (resolve, reject) => {
+		let url = 'http://api.deezer.com/search?limit=1&access_token='+token+'&q=artist:"'+cantor.replace(/[\"']/g, ' ').replace(/ e .*/g, '')+'" track:"'+ musica.replace(/[\"']/g, ' ') +'"';
+		http_get_json(url)
+		.then( (result) => { 
+				if (result.total >= 1) {
+					let music = result.data[0];
+					resolve(music);
 				} else {
-					if (result.total >= 1) {
-						let music = result.data[0];
-						resolve(music);
-					} else {
-						reject('music not found', err);
-					}
+					reject('music not found ' , result);
 				}
-			});
-		} catch (err) {
-			reject(err);
-		}
+			} )
+		.catch( reject );		
 	});
-	return result;
 }
 
 function deezer_get_track(token, music_id){
-	let result = new Promise( (resolve, reject) => {
-		try {
-			let url = 'http://api.deezer.com/track/'+music_id+'?access_token='+token;
-			http_get_json(url, (err, result)=> {
-				if (err) {
-					reject(err);
-				} else {
-					let track = result;
-					resolve(track);
-				}
-			});
-		} catch (err) {
-			reject(err);
-		}
+	return new Promise( (resolve, reject) => {
+		let url = 'http://api.deezer.com/track/'+music_id+'?access_token='+token;
+		http_get_json(url)
+		.then( resolve )
+		.catch( reject );
 	});
-	return result;
 }
 
 function deezer_playlist_tracks(token, playlist_id){
 	console.log('deezer_playlist_tracks',token, playlist_id);
 	return new Promise( (resolve, reject) => {
 		let url = 'http://api.deezer.com/playlist/'+playlist_id+'/tracks?limit=100000&access_token='+token;
-		http_get_json(url, (err, result) => {
-			if (err) { 
-				reject(err);
-			} else {
-				resolve(result.data);
-			}
-		});
+		http_get_json(url)
+		.then( (result) => { resolve(result.data) } )
+		.catch( reject );
 	});
 }
 
@@ -358,7 +332,6 @@ function deezer_playlist_music_add(token, playlist_id, music_id) {
 			      fields: {
 					songs: music_id
 					}
-		              
 			},
 			(err, results) => {
 				if (err) {
