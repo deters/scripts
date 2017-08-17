@@ -258,6 +258,9 @@ function deezer_create_playlist(token, title) {
 
 function deezer_music_search(token, cantor, musica){
 	return new Promise( (resolve, reject) => {
+
+		deezer_get_slot().then( () =>{
+
 		let url = 'http://api.deezer.com/search?limit=1&access_token='+token+'&q=artist:"'+cantor.replace(/[\"']/g, ' ').replace(/ e .*/g, '')+'" track:"'+ musica.replace(/[\"']/g, ' ') +'"';
 		http_get_json(url)
 		.then( (result) => {
@@ -273,6 +276,8 @@ function deezer_music_search(token, cantor, musica){
 				}
 			} )
 		.catch( reject );
+
+	});
 	});
 }
 
@@ -550,7 +555,7 @@ if (process.argv[2] == 'run'){
 	destinos.forEach( (nome) => {
 		deezer_get_playlists(credentials.accessToken, nome, (playlist)=>{
 
-				console.log(playlist.title, playlist.nb_tracks);
+				console.log(playlist.id+' '+playlist.title, playlist.nb_tracks);
 				if (playlist.nb_tracks < 100) {
 					deezer_playlist_delete(credentials.accessToken,playlist.id).then(console.log).catch(console.log);
 				}
@@ -600,4 +605,4 @@ if (process.argv[2] == 'run'){
 }
 // EOF
 
-module.exports =  { config_get_credentials, deezer_music_search }
+module.exports =  { config_get_credentials, deezer_music_search, deezer_playlist_sort , deezer_playlist_music_add}
