@@ -13,8 +13,14 @@
     "cheerio": "^1.0.0-rc.2",
     "dateformat": "^2.0.0",
     "express": "^4.15.3",
+    "nedb": "^1.8.0",
     "node-deezer": "^0.3.3",
+    "node-pre-gyp": "^0.6.36",
+    "object-hash": "^1.1.8",
+    "request": "^2.81.0",
+    "request-promise": "^4.2.1",
     "semaphore": "^1.0.5",
-    "sleep": "^5.1.1"
+    "sleep": "^5.1.1",
+    "sqlite3": "^3.1.9"
   }
 }

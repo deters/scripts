@@ -49,7 +49,7 @@ app.get('/', (req, res) => {
 		let user_promise = deezer_get_user(token).catch( (err) => {
 			res.write('<br>Erro ao acessar deezer. Tente autorizar novamente. '+err);
 			res.send()
-		 })
+		})
 		user_promise.then( (user) => {
 			res.write('<br>Bem vindo '+user.id+' - '+user.name);
 			res.send();
@@ -62,7 +62,7 @@ app.get('/', (req, res) => {
 
 function itapema_list_musics_from_date(date) {
 	return new Promise( (resolve, reject) => {
-	console.log('itapema_list_musics_from_date ',date);
+		console.log('itapema_list_musics_from_date ',date);
 		let music_list = []
 		let destinos = {
 			madrugada : {nome: 'Itapema - Madrugada'},
@@ -99,51 +99,51 @@ function itapema_list_musics_from_date(date) {
 			'23': destinos.soul,
 		}
 		request('http://www.clicrbs.com.br/especial/sc/itapemafmsc/65,434,15,2,5,2,'+ date +',PlayList.html', function (error, response, html) {
-		    if (!error) {
-			var $ = cheerio.load(html);
-			$('table.grade tbody').each( (index, value) => {
-				let tbody = $(value);
-				$('tr', tbody).each ( (index, value) => {
-					let tr = $(value);
-					var musica = { playlist: '', cantor: '', musica: '', disco: ''}
-					musica.horario = tr.children().first().text();
-					musica.cantor  = tr.children().first().next().text();
-					var musica_disco  = tr.children().first().next().next().text();
-					musica.musica = musica_disco.match(/[^(]*/)[0].trim();
-					found = musica_disco.match(/[(].*[)]/);
-		                        if (found) {
-						musica.disco =  found[0];
-					}
-					let hora = musica.horario.substr(0,2)
-					let playlist_name = horarios_playlist[hora].nome;
-					musica.playlist = playlist_name;
-					if (!(/^Vh |^Vinheta|Itapema/.test(musica.musica)) ) {
-						music_list.push(musica);
-					}
+			if (!error) {
+				var $ = cheerio.load(html);
+				$('table.grade tbody').each( (index, value) => {
+					let tbody = $(value);
+					$('tr', tbody).each ( (index, value) => {
+						let tr = $(value);
+						var musica = { playlist: '', cantor: '', musica: '', disco: ''}
+						musica.horario = tr.children().first().text();
+						musica.cantor  = tr.children().first().next().text();
+						var musica_disco  = tr.children().first().next().next().text();
+						musica.musica = musica_disco.match(/[^(]*/)[0].trim();
+						found = musica_disco.match(/[(].*[)]/);
+						if (found) {
+							musica.disco =  found[0];
+						}
+						let hora = musica.horario.substr(0,2)
+						let playlist_name = horarios_playlist[hora].nome;
+						musica.playlist = playlist_name;
+						if (!(/^Vh |^Vinheta|Itapema/.test(musica.musica)) ) {
+							music_list.push(musica);
+						}
 
+					});
 				});
-			});
-			resolve(music_list);
-		    } else {
-			reject(error);
-		    }
+				resolve(music_list);
+			} else {
+				reject(error);
+			}
 		});
 	})
 }
 
 function http_post_json(path, data, callback) {
 	var options = {
-	  uri: 'http://api.deezer.com/'+path,
-	  method: 'POST',
-	  json: data
+		uri: 'http://api.deezer.com/'+path,
+		method: 'POST',
+		json: data
 	};
 
 	request(options, function (error, response, body) {
-	  if (!error && response.statusCode == 200) {
-		console.log([body]);
-		let result = body;
-		callback(result.error, result);
-	  }
+		if (!error && response.statusCode == 200) {
+			console.log([body]);
+			let result = body;
+			callback(result.error, result);
+		}
 	});
 }
 
@@ -152,10 +152,10 @@ function http_get(url) {
 		http.get(url, function(res) {
 			var content = '';
 			res.on('data', function(chunk) {
-			content += chunk;
+				content += chunk;
 			});
 			res.on('end', function() {
-			resolve(content);
+				resolve(content);
 			});
 		}).on('error', function(e) {
 			reject(e);
@@ -183,8 +183,8 @@ app.get('/auth', function (req, res) {
 	var code = req.query['code'];
 	let credentials = config_get_credentials();
 	if (!code) {
-               var err = req.query['error_reason'];
-               console.log(err);
+		var err = req.query['error_reason'];
+		console.log(err);
 	}
 	deezer_get_access_token(credentials.appId, credentials.appSecret, code, (err, result)=>{
 		if (err) {
@@ -192,21 +192,21 @@ app.get('/auth', function (req, res) {
 		} else {
 			console.log(result.accessToken);
 			var myOptions = {
-                                appId: credentials.appId,
-                                appSecret: credentials.appSecret,
+				appId: credentials.appId,
+				appSecret: credentials.appSecret,
 				redirectUrl : credentials.redirectUrl,
-		    		code: code,
+				code: code,
 				accessToken: result.accessToken,
 			}
 			var data = JSON.stringify(myOptions);
 			fs.writeFile('./config.json', data, function (err) {
-			    if (err) {
-			      console.log('There has been an error saving your configuration data.');
-			      console.log(err.message);
-			      return;
-			    }
-			    console.log('Configuration saved successfully.')
-			  });
+				if (err) {
+					console.log('There has been an error saving your configuration data.');
+					console.log(err.message);
+					return;
+				}
+				console.log('Configuration saved successfully.')
+			});
 			res.write('<html><body><a href="./run"> Executar importação </a>');
 			res.send();
 		}
@@ -215,15 +215,15 @@ app.get('/auth', function (req, res) {
 
 function config_get_credentials() {
 	var credentials = null;
-        var data = fs.readFileSync('./config.json'),
-              myObj;
-          try {
-            credentials = JSON.parse(data);
-          }
-          catch (err) {
-            console.log('There has been an error parsing ./config.json')
-            console.log(err);
-          }
+	var data = fs.readFileSync('./config.json'),
+	myObj;
+	try {
+		credentials = JSON.parse(data);
+	}
+	catch (err) {
+		console.log('There has been an error parsing ./config.json')
+		console.log(err);
+	}
 	return credentials;
 }
 
@@ -240,11 +240,11 @@ function deezer_create_playlist(token, title) {
 		deezer.request(
 			token,
 			{
-				  resource: 'user/me/playlists',
-				  method: 'post',
-				  fields: {
+				resource: 'user/me/playlists',
+				method: 'post',
+				fields: {
 					title: title
-				  }
+				}
 			},
 			(err, result) => {
 				if (err) {
@@ -261,9 +261,9 @@ function deezer_music_search(token, cantor, musica){
 
 		deezer_get_slot().then( () =>{
 
-		let url = 'http://api.deezer.com/search?limit=1&access_token='+token+'&q=artist:"'+cantor.replace(/[\"']/g, ' ').replace(/ e .*/g, '')+'" track:"'+ musica.replace(/[\"']/g, ' ') +'"';
-		http_get_json(url)
-		.then( (result) => {
+			let url = 'http://api.deezer.com/search?limit=1&access_token='+token+'&q=artist:"'+cantor.replace(/[\"']/g, ' ').replace(/ e .*/g, '')+'" track:"'+ musica.replace(/[\"']/g, ' ') +'"';
+			http_get_json(url)
+			.then( (result) => {
 				if (result.total >= 1) {
 					let music = result.data[0];
 					resolve(music);
@@ -275,18 +275,24 @@ function deezer_music_search(token, cantor, musica){
 					}
 				}
 			} )
-		.catch( reject );
+			.catch( reject );
 
-	});
+		});
 	});
 }
 
 function deezer_get_track(token, music_id){
 	return new Promise( (resolve, reject) => {
-		let url = 'http://api.deezer.com/track/'+music_id+'?access_token='+token;
-		http_get_json(url)
-		.then( resolve )
-		.catch( reject );
+
+		deezer_get_slot().then( () =>{
+
+			let url = 'http://api.deezer.com/track/'+music_id+'?access_token='+token;
+			http_get_json(url)
+			.then( resolve )
+			.catch( reject );
+
+		}).catch(reject);
+
 	});
 }
 
@@ -300,6 +306,31 @@ function deezer_playlist_tracks(token, playlist_id){
 	});
 }
 
+function deezer_playlist_tracks_delete(token, playlist_id, songs){
+	console.log('deezer_playlist_tracks_delete', playlist_id);
+	return new Promise( (resolve, reject) => {
+		deezer.request(
+			token,
+			{
+				resource: 'playlist/'+playlist_id+'/tracks?request_method=delete',
+				method: 'post',
+				fields: {
+					songs: songs
+				}
+			},
+			(err, result) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(result);
+				}
+			}
+		);
+	});
+}
+
+
+
 function deezer_playlist_delete(token, playlist_id) {
 	console.log('deezer_playlist_delete', playlist_id);
 	console.log(token);
@@ -307,9 +338,9 @@ function deezer_playlist_delete(token, playlist_id) {
 		deezer.request(
 			token,
 			{
-			      resource: 'playlist/'+playlist_id+'?request_method=delete',
-			      method: 'get',
-			      fields: {}
+				resource: 'playlist/'+playlist_id+'?request_method=delete',
+				method: 'get',
+				fields: {}
 			},
 			(err, result) => {
 				if (err) {
@@ -329,11 +360,11 @@ function deezer_playlist_sort(token, playlist_id, order) {
 		deezer.request(
 			token,
 			{
-			      resource: 'playlist/'+playlist_id+'/tracks',
-			      method: 'post',
-			      fields: {
-						order: order
-			      }
+				resource: 'playlist/'+playlist_id+'/tracks',
+				method: 'post',
+				fields: {
+					order: order
+				}
 			},
 			(err, result) => {
 				if (err) {
@@ -367,11 +398,11 @@ function deezer_playlist_music_add(token, playlist_id, music_id) {
 		deezer.request(
 			token,
 			{
-			      resource: 'playlist/'+playlist_id+'/tracks',
-			      method: 'post',
-			      fields: {
+				resource: 'playlist/'+playlist_id+'/tracks',
+				method: 'post',
+				fields: {
 					songs: music_id
-					}
+				}
 			},
 			(err, results) => {
 				if (err) {
@@ -387,25 +418,25 @@ function deezer_playlist_music_add(token, playlist_id, music_id) {
 
 function deezer_get_playlists(token, name, callback) {
 
-		deezer.request(
-			token,
-			{
-				  resource: 'user/me/playlists',
-				  method: 'get',
-				  fields: {
-					limit : 1000
-				  }
-			},
-			(err, results) => {
-				if (results) {
-					for (var i = 0; i < results.data.length; i++) {
-						if (results.data[i].title == name) {
-							callback(results.data[i]);
-						}
+	deezer.request(
+		token,
+		{
+			resource: 'user/me/playlists',
+			method: 'get',
+			fields: {
+				limit : 1000
+			}
+		},
+		(err, results) => {
+			if (results) {
+				for (var i = 0; i < results.data.length; i++) {
+					if (results.data[i].title == name) {
+						callback(results.data[i]);
 					}
 				}
 			}
-		);
+		}
+	);
 }
 
 function deezer_get_playlist(token, name) {
@@ -413,11 +444,11 @@ function deezer_get_playlist(token, name) {
 		deezer.request(
 			token,
 			{
-				  resource: 'user/me/playlists',
-				  method: 'get',
-				  fields: {
+				resource: 'user/me/playlists',
+				method: 'get',
+				fields: {
 					limit : 1000
-				  }
+				}
 			},
 			(err, results) => {
 				if (results) {
@@ -497,11 +528,11 @@ function get_create_playlist(token, playlist_name) {
 function run(token, date){
 
 	let destinos = ['Itapema - Madrugada',
-		'Itapema - Acorde',
-		 'Itapema - Mundo',
-		 'Itapema - Soul',
-		 'Itapema - Fim de Tarde',
-		 'Itapema - Brasil']
+	'Itapema - Acorde',
+	'Itapema - Mundo',
+	'Itapema - Soul',
+	'Itapema - Fim de Tarde',
+	'Itapema - Brasil']
 
 	console.log('Using token: ',token);
 
@@ -544,23 +575,23 @@ if (process.argv[2] == 'run'){
 	let credentials = config_get_credentials();
 
 	destinos = [
-	         'Itapema - Madrugada',
-			 'Itapema - Acorde',
-			 'Itapema - Mundo',
-			 'Itapema - Soul',
-			 'Itapema - Fim de Tarde',
-			 'Itapema - Brasil'
-			 ]
+		'Itapema - Madrugada',
+		'Itapema - Acorde',
+		'Itapema - Mundo',
+		'Itapema - Soul',
+		'Itapema - Fim de Tarde',
+		'Itapema - Brasil'
+	]
 
 	destinos.forEach( (nome) => {
 		deezer_get_playlists(credentials.accessToken, nome, (playlist)=>{
 
-				console.log(playlist.id+' '+playlist.title, playlist.nb_tracks);
-				if (playlist.nb_tracks < 100) {
-					deezer_playlist_delete(credentials.accessToken,playlist.id).then(console.log).catch(console.log);
-				}
+			console.log(playlist.id+' '+playlist.title, playlist.nb_tracks);
+			if (playlist.nb_tracks < 100) {
+				deezer_playlist_delete(credentials.accessToken,playlist.id).then(console.log).catch(console.log);
+			}
 
-			});
+		});
 	})
 
 
@@ -577,11 +608,11 @@ if (process.argv[2] == 'run'){
 		let token = credentials.accessToken;
 
 		let destinos = ['Itapema - Madrugada',
-			'Itapema - Acorde',
-			 'Itapema - Mundo',
-			 'Itapema - Soul',
-			 'Itapema - Fim de Tarde',
-			 'Itapema - Brasil']
+		'Itapema - Acorde',
+		'Itapema - Mundo',
+		'Itapema - Soul',
+		'Itapema - Fim de Tarde',
+		'Itapema - Brasil']
 
 		destinos.map( (playlist_name) =>{
 			playlists.set(playlist_name, get_create_playlist(token, playlist_name));
@@ -605,4 +636,15 @@ if (process.argv[2] == 'run'){
 }
 // EOF
 
-module.exports =  { config_get_credentials, deezer_music_search, deezer_playlist_sort , deezer_playlist_music_add}
+module.exports =  {
+	config_get_credentials,
+	deezer_music_search,
+	deezer_playlist_sort,
+	deezer_playlist_music_add,
+	deezer_get_playlist,
+	get_create_playlist,
+	deezer_get_track,
+	http_get_json,
+	deezer_playlist_tracks_delete,
+	deezer_playlist_tracks
+}

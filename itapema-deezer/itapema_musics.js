@@ -8,7 +8,7 @@ Tasks:
 var sqlite3 = require('sqlite3').verbose();
 let db = new sqlite3.Database('./itapema_musics.sqlite');
 
-var request = require('request');
+var request = require('request-promise');
 var cheerio = require('cheerio');         // Web parser. Used to collect Itapema's information.
 var hash = require('object-hash');
 
@@ -16,20 +16,17 @@ function itapema_list_dates() {
 	return new Promise( (resolve, reject) => {
 		let dates = []
 		let url = 'http://www.clicrbs.com.br/especial/sc/itapemafmsc/65,434,15,2,0,0,0,PlayList.html';
-		request(url, function (error, response, html) {
-			if (!error) {
-				var $ = cheerio.load(html);
-				$('select#data option').each( (index, value) => {
-					let select_value = $(value).attr('value');
-					if (select_value != 0) {
-						dates.push(select_value);
-					}
-				});
-				resolve(dates);
-			} else {
-				reject(error);
-			}
-		});
+		request(url).then( html => {
+			var $ = cheerio.load(html);
+			$('select#data option').each( (index, value) => {
+				let select_value = $(value).attr('value');
+				if (select_value != 0) {
+					dates.push(select_value);
+				}
+			});
+			resolve(dates);
+		}).catch(reject);
+
 	})
 }
 
@@ -44,65 +41,63 @@ function itapema_list_musics_from_date(date) {
 		let url_date = day+month+year;
 
 		console.log('requesting '+url_date);
-		let url = 'http://www.clicrbs.com.br/especial/sc/itapemafmsc/65,434,15,2,5,2,'+ url_date+',PlayList.html';
-		request(url, function (error, response, html) {
-			if (!error) {
-				var $ = cheerio.load(html);
-				$('table.grade tbody').each( (index, value) => {
-					let tbody = $(value);
-					$('tr', tbody).each ( (index, value) => {
-						let tr = $(value);
-						var music = {}
-						music.origin = 'Itapema'
-						music.year = year;
-						music.month = month;
-						music.day = day;
-						music.time = tr.children().first().text();
-						music.artist  = tr.children().first().next().text();
-						var music_disco  = tr.children().first().next().next().text();
-						music.music = music_disco.match(/[^(]*/)[0].trim();
-						found = music_disco.match(/[(].*[)]/);
-						if (found) {
-							music.disco =  found[0];
-						}
-						music.id = hash(music);
+		let url = `http://www.clicrbs.com.br/especial/sc/itapemafmsc/65,434,15,2,5,2,${url_date},PlayList.html`;
+		request(url).then( html => {
+			var $ = cheerio.load(html);
+			$('table.grade tbody').each( (index, value) => {
+				let tbody = $(value);
+				$('tr', tbody).each ( (index, value) => {
+					let tr = $(value);
+					var music = {}
+					music.origin = 'Itapema'
+					music.year = year;
+					music.month = month;
+					music.day = day;
+					music.time = tr.children().first().text();
+					music.artist  = tr.children().first().next().text();
+					var music_disco  = tr.children().first().next().next().text();
+					music.music = music_disco.match(/[^(]*/)[0].trim();
+					found = music_disco.match(/[(].*[)]/);
+					if (found) {
+						music.disco =  found[0];
+					}
+					music.id = hash(music);
 
-						music_list.push(music);
-					});
+					music_list.push(music);
 				});
-				resolve(music_list);
-			} else {
-				reject(error);
-			}
-		});
+			});
+			resolve(music_list);
+		}).catch(reject);
 	})
 }
 
+var stmt = db.prepare("INSERT INTO ITAPEMA_MUSIC VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-db.run("CREATE TABLE if not exists ITAPEMA_MUSIC (id text primary key, origin text, year int, month int, day int, time text, artist text, music text, disc text, deezer_id int)", (err, result) => {
+function itapema_save_musics(music_list) {
 
-	var stmt = db.prepare("INSERT INTO ITAPEMA_MUSIC VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+	console.log(music_list.length);
+	music_list.forEach( (music) =>{
 
-	dates = itapema_list_dates();//process.argv.slice(2)
-	dates.then( (dates) => {
-		dates.forEach( (date) => {
-			let list = itapema_list_musics_from_date(date)
-			list.then( (music_list) => {
-				console.log(music_list.length);
-				music_list.forEach( (music) =>{
-
-					stmt.run([music.id, music.origin, music.year, music.month, music.day, music.time, music.artist, music.music, music.disco, null] , (err, row) => {
-						if(err && err.code != 'SQLITE_CONSTRAINT' ) {
-								console.log(err);
-						} else {
-							//console.log('ok '+row);
-						}
-					})
-				});
-			}).catch(console.log);
-
-		});
-
+		stmt.run([music.id, music.origin, music.year, music.month, music.day, music.time, music.artist, music.music, music.disco, null] , (err, row) => {
+			if(err && err.code != 'SQLITE_CONSTRAINT' ) {
+				console.log(err);
+			} else {
+				//console.log('ok '+row);
+			}
+		})
 	});
 
-});
+}
+
+db.run("CREATE TABLE if not exists ITAPEMA_MUSIC (id text primary key, origin text, year int, month int, day int, time text, artist text, music text, disc text, deezer_id int, isrc text)", (err, result) => {
+	itapema_list_dates()
+	.then( (dates) => {
+		dates.forEach( (date) => {
+			itapema_list_musics_from_date(date)
+			.then(itapema_save_musics)
+			.catch(console.log);
+		});
+
+	})
+	.catch(console.log);;
+})
