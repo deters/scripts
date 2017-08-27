@@ -67,18 +67,18 @@ function itapema_list_musics_from_date(date) {
 				});
 			});
 			resolve(music_list);
-		}).catch(reject);
+		}).catch(console.log);
 	})
 }
 
-var stmt = db.prepare("INSERT INTO ITAPEMA_MUSIC VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+var stmt = db.prepare("INSERT INTO ITAPEMA_MUSIC (id, origin, year, month, day, time, artist, music, disc) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 function itapema_save_musics(music_list) {
 
 	console.log(music_list.length);
 	music_list.forEach( (music) =>{
 
-		stmt.run([music.id, music.origin, music.year, music.month, music.day, music.time, music.artist, music.music, music.disco, null] , (err, row) => {
+		stmt.run([music.id, music.origin, music.year, music.month, music.day, music.time, music.artist, music.music, music.disco] , (err, row) => {
 			if(err && err.code != 'SQLITE_CONSTRAINT' ) {
 				console.log(err);
 			} else {
