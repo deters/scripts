@@ -3,10 +3,10 @@ let credentials = deezer.config_get_credentials();
 let token = credentials.accessToken;
 
 let sqlite3 = require('sqlite3').verbose();
-let db = new sqlite3.Database('./itapema_musics.sqlite');
+let db = new sqlite3.Database('./musics.sqlite');
 
 let stmt = db.prepare(`
-  update ITAPEMA_MUSIC
+  update MUSIC
   set isrc = ?,
       release_date = ?
   where deezer_id = ?
@@ -16,7 +16,7 @@ let stmt = db.prepare(`
 
   let DISTINCT_DEEZER_MUSICS_QUERY = `
   select distinct deezer_id
-  from ITAPEMA_MUSIC
+  from MUSIC
   where deezer_id is not null
     and (
         isrc is null

@@ -1,5 +1,5 @@
 #!/bin/bash
-node itapema_musics.js
-node deezer_musics.js
-node deezer_isrc.js
-node select.js
+nodejs itapema_musics.js
+nodejs deezer_musics.js
+nodejs deezer_isrc.js
+nodejs select.js

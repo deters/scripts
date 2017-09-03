@@ -17,7 +17,7 @@ function getInfo() {
 };
 
 var sqlite3 = require('sqlite3').verbose();
-let db = new sqlite3.Database('./mundolivre.sqlite');
+var db = new sqlite3.Database('./mundolivre.sqlite');
 
 var hash = require('object-hash');
 
@@ -28,18 +28,19 @@ function createTable(){
 	console.log('createTable');
 
 	return new Promise( (resolve, reject)=>{
-
-		console.log(db);
-
-		db.run(`create table if not exists mundolivre		(
+		let create_table = db.prepare(`create table if not exists mundolivre (
 			artista text,
-		  musica text,
-		  album text,
-		  programa text,
+			musica text,
+			album text,
+			programa text,
 			datahora timestamp
-		);`);
+		)`);m
 
-		resolve('ok');
+
+		create_table.run([],(err, result) => {
+			console.log('erro!')
+			resolve(err);
+		});
 
 	});
 }
@@ -66,13 +67,19 @@ var sleep = require('sleep');
 
 while(1) {
 
-		console.log('ok');
+	console.log('--');
 
-	createTable()
-	.then(getInfo)
-	.then(saveInfo)
-	.then((result) => {console.log(`result: ${result}`)})
-	.catch((err) => {console.log(`err: ${err}`)});
+	let p = createTable();
+
+	console.log(p);
+
+	p.then((x) => {console.log(`x: ${x}`)});
+
+	// .then((result) => {console.log(result)})
+	// .then(getInfo)
+	// .then(saveInfo)
+	// .then((result) => {console.log(`result: ${result}`)})
+	// .catch((err) => {console.log(`err: ${err}`)});
 
 
 	sleep.sleep(1);
@@ -89,10 +96,10 @@ return;
 //var stmt = db.prepare("INSERT INTO ITAPEMA_MUSIC VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 
-		// stmt.run([music.id, music.origin, music.year, music.month, music.day, music.time, music.artist, music.music, music.disco, null] , (err, row) => {
-		// 	if(err && err.code != 'SQLITE_CONSTRAINT' ) {
-		// 		console.log(err);
-		// 	} else {
-		// 		//console.log('ok '+row);
-		// 	}
-		// })
+// stmt.run([music.id, music.origin, music.year, music.month, music.day, music.time, music.artist, music.music, music.disco, null] , (err, row) => {
+// 	if(err && err.code != 'SQLITE_CONSTRAINT' ) {
+// 		console.log(err);
+// 	} else {
+// 		//console.log('ok '+row);
+// 	}
+// })

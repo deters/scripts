@@ -3,10 +3,10 @@ let credentials = deezer.config_get_credentials();
 let token = credentials.accessToken;
 
 let sqlite3 = require('sqlite3').verbose();
-let db = new sqlite3.Database('./itapema_musics.sqlite');
+let db = new sqlite3.Database('./musics.sqlite');
 
 let stmt = db.prepare(`
-  update ITAPEMA_MUSIC
+  update music
   set deezer_id = ?
   where
   artist = ? and music = ?
@@ -14,12 +14,12 @@ let stmt = db.prepare(`
 
   let DISTINCT_DEEZER_MUSICS_QUERY = `
   select distinct artist, music
-  from ITAPEMA_MUSIC
+  from music
   where deezer_id is null
   and music not like '%Itapema%'
   and music not like '%Vinheta%'
   and music not like '%Vh %'
-  order by year desc, month desc, day desc
+  order by artist, music
   `;
 
   db.each(DISTINCT_DEEZER_MUSICS_QUERY, function (err, music) {
@@ -27,6 +27,7 @@ let stmt = db.prepare(`
       console.log(err);
     }
     //if (!(/^Vh |^Vinheta|Itapema/.test(music.music)) ) {
+
     deezer.deezer_music_search(token, music.artist, music.music)
     .then( (deezer_music) => {
       stmt.run([deezer_music.id, music.artist, music.music ] , (err, result) => {

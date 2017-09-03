@@ -6,7 +6,7 @@ Tasks:
 3. map musics to playlists     => deezer-playlists.db
 */
 var sqlite3 = require('sqlite3').verbose();
-let db = new sqlite3.Database('./itapema_musics.sqlite');
+let db = new sqlite3.Database('./musics.sqlite');
 
 semaphore = require('semaphore')
 
@@ -21,7 +21,7 @@ function itapema_list_dates() {
 	return new Promise( (resolve, reject) => {
 		let dates = []
 		let url = 'http://www.clicrbs.com.br/especial/sc/itapemafmsc/65,434,15,2,0,0,0,PlayList.html';
-		request(url).then( html => {
+		request(url, 'utf-8').then( html => {
 			var $ = cheerio.load(html);
 			$('select#data option').each( (index, value) => {
 				let select_value = $(value).attr('value');
@@ -34,6 +34,31 @@ function itapema_list_dates() {
 
 	})
 }
+
+
+const getRaw = function(url) {
+  // return new pending promise
+  return new Promise((resolve, reject) => {
+    // select http or https module, depending on reqested url
+    const lib = url.startsWith('https') ? require('https') : require('http');
+    const request = lib.get(url, (response) => {
+      // handle http errors
+      if (response.statusCode < 200 || response.statusCode > 299) {
+         reject(new Error('Failed to load page, status code: ' + response.statusCode));
+       }
+      // temporary data holder
+      const body = [];
+      // on every content chunk, push it to the data array
+      response.on('data', (chunk) => body.push(chunk));
+      // we are done, resolve promise with those joined chunks
+      response.on('end', () => resolve(body));
+    });
+    // handle connection errors of the request
+    request.on('error', (err) => reject(err))
+    })
+};
+
+var iconv = require('iconv-lite');
 
 function itapema_list_musics_from_date(date) {
 
@@ -54,7 +79,10 @@ function itapema_list_musics_from_date(date) {
 
 			console.log('requesting '+url_date);
 			let url = `http://www.clicrbs.com.br/especial/sc/itapemafmsc/65,434,15,2,5,2,${url_date},PlayList.html`;
-			request(url).then( html => {
+			getRaw(url).then( rawhtml => {
+
+				let html = iconv.decode(Buffer.concat(rawhtml), 'iso-8859-1');
+
 				var $ = cheerio.load(html);
 				$('table.grade tbody').each( (index, value) => {
 					let tbody = $(value);
@@ -89,14 +117,14 @@ function itapema_list_musics_from_date(date) {
 
 }
 
-var stmt = db.prepare("INSERT INTO ITAPEMA_MUSIC (id, origin, year, month, day, time, artist, music, disc) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+var stmt = db.prepare("INSERT INTO MUSIC (id, origin, playdate, playtime, artist, music, disc) VALUES (?, ?, date(?), time(?), ?, ?, ?)");
 
 function itapema_save_musics(music_list) {
 
 	console.log(music_list.length);
 	music_list.forEach( (music) =>{
 
-		stmt.run([music.id, music.origin, music.year, music.month, music.day, music.time, music.artist, music.music, music.disco] , (err, row) => {
+		stmt.run([music.id, music.origin, music.year+'-'+ music.month+'-'+ music.day, music.time+':00', music.artist, music.music, music.disco] , (err, row) => {
 			if(err && err.code != 'SQLITE_CONSTRAINT' ) {
 				console.log(err);
 			} else {
@@ -107,7 +135,7 @@ function itapema_save_musics(music_list) {
 
 }
 
-db.run("CREATE TABLE if not exists ITAPEMA_MUSIC (id text primary key, origin text, year int, month int, day int, time text, artist text, music text, disc text, deezer_id int, isrc text)", (err, result) => {
+db.run("CREATE TABLE music (id text primary key, origin text, playdate date, playtime time, artist text, music text, disc text, deezer_id int, isrc text,release_date date)", (err, result) => {
 	itapema_list_dates()
 	.then( (dates) => {
 		dates.forEach( (date) => {
