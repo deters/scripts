@@ -6,7 +6,7 @@ Tasks:
 3. map musics to playlists     => deezer-playlists.db
 */
 var sqlite3 = require('sqlite3').verbose();
-let db = new sqlite3.Database('./musics.sqlite');
+let db = new sqlite3.Database('./musics2.sqlite');
 
 semaphore = require('semaphore')
 

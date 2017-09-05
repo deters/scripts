@@ -21,11 +21,11 @@ let BEST_MUSICS_QUERY = `
     where deezer_id is not null
       and isrc like '%'
       and playtime between time('07:00') and time('21:59')
+      and julianday(date('now')) <> julianday(playdate)
   ) x
   group by deezer_id
   having count(*) - min(new) > 0
   order by random() --ranking desc, atual desc
-  
 `;/*1/(julianday('now') - julianday(max(diff))) *     */
 
 let deezer = require('./deezer.js')

@@ -2,8 +2,8 @@ let deezer = require('./deezer.js')
 let credentials = deezer.config_get_credentials();
 let token = credentials.accessToken;
 
-let sqlite3 = require('sqlite3').verbose();
-let db = new sqlite3.Database('./musics.sqlite');
+var sqlite3 = require('sqlite3').verbose();
+let db = new sqlite3.Database('./mundolivre.sqlite');
 
 let stmt = db.prepare(`
   update music

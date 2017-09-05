@@ -16,76 +16,57 @@ function getInfo() {
 	});
 };
 
-var sqlite3 = require('sqlite3').verbose();
+var sqlite3 = require('sqlite3');
 var db = new sqlite3.Database('./mundolivre.sqlite');
 
 var hash = require('object-hash');
 
 
 
-function createTable(){
-
-	console.log('createTable');
-
-	return new Promise( (resolve, reject)=>{
-		let create_table = db.prepare(`create table if not exists mundolivre (
-			artista text,
-			musica text,
-			album text,
-			programa text,
-			datahora timestamp
-		)`);m
-
-
-		create_table.run([],(err, result) => {
-			console.log('erro!')
-			resolve(err);
-		});
-
-	});
-}
-
-function saveInfo(info){
-
-	console.log('saveInfo');
-
-	return new Promise((resolve, reject)=>{
-		let insert = db.prepare(`insert into mundolivre (artista, musica, album, programa, datahora) values (?,?,?,?,CURRENT_TIMESTAMP)`)
-		let data= [info.artista, info.musica, info.album, info.programa];
-
-		insert.run(data, (result, err) =>{
-			if(err) {
-				reject(err);
-			}
-			resolve([info.artista, info.musica]);
-		});
-
-	});
-}
-
 var sleep = require('sleep');
 
-while(1) {
+console.log(db);
 
-	console.log('--');
+db.serialize(()=>{
 
-	let p = createTable();
+	while(1) {
 
-	console.log(p);
+		console.log(db);
 
-	p.then((x) => {console.log(`x: ${x}`)});
+		db.run(`CREATE TABLE if not exists mundolivre (id text primary key, origin text, playdate date, playtime time, artist text, music text, disc text, deezer_id int, isrc text, release_date date)
+		`);
 
-	// .then((result) => {console.log(result)})
-	// .then(getInfo)
-	// .then(saveInfo)
-	// .then((result) => {console.log(`result: ${result}`)})
-	// .catch((err) => {console.log(`err: ${err}`)});
+		db.run(`insert into mundolivre (id) values ('teste!');
+		`, (err, response) => {
+			console.log(err);
+			console.log(response);
+		});
+
+db.close();
+
+		/*.then((result) => {
+		console.log(result);
+	}).catch((err)=>{
+	console.log(err);
+});
+*/
+
+// .then((result) => {console.log(result)})
+// .then(getInfo)
+// .then(saveInfo)
+// .then((result) => {console.log(`result: ${result}`)})
+// .catch((err) => {console.log(`err: ${err}`)});
 
 
-	sleep.sleep(1);
+sleep.sleep(1);
 
 
 }
+
+})
+
+
+
 
 return;
 
