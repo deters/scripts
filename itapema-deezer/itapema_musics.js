@@ -6,7 +6,7 @@ Tasks:
 3. map musics to playlists     => deezer-playlists.db
 */
 var sqlite3 = require('sqlite3').verbose();
-let db = new sqlite3.Database('./musics2.sqlite');
+let db = new sqlite3.Database('./musics.sqlite');
 
 semaphore = require('semaphore')
 
@@ -66,7 +66,7 @@ function itapema_list_musics_from_date(date) {
 	return new Promise( (resolve, reject) => {
 
 		sem1.take(()=>{
-			setTimeout(sem1.leave, 1 * 1000);
+//			setTimeout(sem1.leave, 1 * 2000);
 
 
 			let music_list = []
@@ -106,6 +106,7 @@ function itapema_list_musics_from_date(date) {
 						music_list.push(music);
 					});
 				});
+                                sem1.leave()
 				resolve(music_list);
 			}).catch(console.log);
 

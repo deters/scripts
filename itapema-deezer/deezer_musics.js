@@ -3,7 +3,7 @@ let credentials = deezer.config_get_credentials();
 let token = credentials.accessToken;
 
 var sqlite3 = require('sqlite3').verbose();
-let db = new sqlite3.Database('./mundolivre.sqlite');
+let db = new sqlite3.Database('./musics.sqlite');
 
 let stmt = db.prepare(`
   update music
@@ -13,13 +13,13 @@ let stmt = db.prepare(`
   `);
 
   let DISTINCT_DEEZER_MUSICS_QUERY = `
-  select distinct artist, music
+  select artist, music, max(playdate) as last_playdate
   from music
   where deezer_id is null
   and music not like '%Itapema%'
   and music not like '%Vinheta%'
   and music not like '%Vh %'
-  order by artist, music
+  group by artist, music
   `;
 
   db.each(DISTINCT_DEEZER_MUSICS_QUERY, function (err, music) {

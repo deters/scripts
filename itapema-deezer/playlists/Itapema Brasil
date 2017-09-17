@@ -1,0 +1,27 @@
+  select
+    deezer_id,
+    max(music) as music,
+    max(artist) as artist,
+    round(0.0 + (select count(*) from music y where y.deezer_id = x.deezer_id) - avg(new)) as ranking,
+    max(release_date) as release_date
+  from (
+    select
+      deezer_id,
+      id,
+      music,
+      artist,
+      release_date,
+      ( julianday(date('now')) - julianday(release_date) ) as atual,
+      ( julianday(date('now')) - julianday(playdate) ) as new
+    from music
+    where deezer_id is not null
+      and isrc like 'BR%'
+      and playtime between time('07:00') and time('21:59')
+      and julianday(date('now')) <> julianday(playdate)
+    order by playdate desc
+    limit 400
+  ) x
+  group by deezer_id
+  order by ranking desc, random()
+  limit 200
+

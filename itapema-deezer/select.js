@@ -1,32 +1,26 @@
 let sqlite3 = require('sqlite3').verbose();
 let db = new sqlite3.Database('./musics.sqlite');
 
-let BEST_MUSICS_QUERY = `
-  select
-    deezer_id,
-    max(music) as music,
-    max(artist) as artist,
-    0.0 + count(*) - min(new) as ranking,
-    max(release_date) as release_date
-  from (
-    select
-      deezer_id,
-      id,
-      music,
-      artist,
-      release_date,
-      ( julianday(date('now')) - julianday(release_date) ) as atual,
-      ( julianday(date('now')) - julianday(playdate) ) as new
-    from music
-    where deezer_id is not null
-      and isrc like '%'
-      and playtime between time('07:00') and time('21:59')
-      and julianday(date('now')) <> julianday(playdate)
-  ) x
-  group by deezer_id
-  having count(*) - min(new) > 0
-  order by random() --ranking desc, atual desc
-`;/*1/(julianday('now') - julianday(max(diff))) *     */
+const fs = require('fs');
+
+const testFolder = './playlists/';
+
+fs.readdir(testFolder, (err, files) => {
+  if (err) {
+	console.log(err);
+	return;
+  }
+  files.forEach(file => {
+    console.log('Processing '+file);
+    fs.readFile(`./playlists/${file}`, 'utf8', function (err,data) {
+      if (err) {
+        return console.log(err);
+      }
+      updatePlaylist(file, data);
+    });
+  });
+})
+
 
 let deezer = require('./deezer.js')
 let credentials = deezer.config_get_credentials();
@@ -34,16 +28,17 @@ let token = credentials.accessToken;
 
 let count = 0;
 
-db.all(BEST_MUSICS_QUERY, [], (err, rows) => {
+function updatePlaylist(name, query) {
+console.log('update');
+
+db.all(query, [], (err, rows) => {
   console.log(`got ${rows.length} rows`);
   let order = rows.map((row)=>{
-    if (count++ < 30) {
-      console.log(`#${count}: ${row.ranking} ${row.release_date}, ${row.artist} - ${row.music}  `);
-    }
+      console.log(`${name} += ${row.ranking} ${row.release_date}, ${row.artist} - ${row.music}  `);
     return row.deezer_id;
   }).join(',')
 
-  let playlist_promise = deezer.deezer_get_playlist(token,'Itapema - BR');
+  let playlist_promise = deezer.deezer_get_playlist(token,name);
   playlist_promise.then((playlist) => {
     console.log(`got playlist ${playlist.id}`)
 
@@ -81,3 +76,8 @@ db.all(BEST_MUSICS_QUERY, [], (err, rows) => {
   }).catch( console.log );
 }
 );
+
+}
+
+
+
