@@ -69,7 +69,7 @@ db.all(query, [], (err, rows) => {
     //     }).catch((err)=>{console.log(`err: ${err}`)});
     //   }
     // })
-    .catch((err)=>{console.log(`err: ${err}`)});
+    .catch((err)=>{console.log(`err ${name}: ${err}`)});
 
 
 
