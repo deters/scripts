@@ -309,6 +309,11 @@ function deezer_playlist_tracks(token, playlist_id){
 function deezer_playlist_tracks_delete(token, playlist_id, songs){
 	console.log('deezer_playlist_tracks_delete', playlist_id);
 	return new Promise( (resolve, reject) => {
+
+                deezer_get_slot().then( () =>{
+
+
+
 		deezer.request(
 			token,
 			{
@@ -326,6 +331,10 @@ function deezer_playlist_tracks_delete(token, playlist_id, songs){
 				}
 			}
 		);
+
+		})
+		.catch(reject); 
+
 	});
 }
 
@@ -357,6 +366,11 @@ function deezer_playlist_delete(token, playlist_id) {
 function deezer_playlist_sort(token, playlist_id, order) {
 	console.log('deezer_playlist_sort', playlist_id);
 	return new Promise( (resolve, reject) => {
+
+                deezer_get_slot().then( () =>{
+
+
+
 		deezer.request(
 			token,
 			{
@@ -374,6 +388,9 @@ function deezer_playlist_sort(token, playlist_id, order) {
 				}
 			}
 		);
+
+		});
+
 	});
 }
 

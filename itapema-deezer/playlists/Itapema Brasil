@@ -1,10 +1,12 @@
   select
+    spotify_id,
     deezer_id,
     max(music) as music,
     max(artist) as artist,
     sum(play_rev_ranking) as ranking
   from (
     select
+      spotify_id,
       deezer_id,
       id,
       music,
@@ -18,6 +20,6 @@
       and julianday(date('now')) <> julianday(playdate)
   ) x
   group by deezer_id
-  order by ranking desc, random()
-  limit 200
+  order by random()
+  limit 50
 

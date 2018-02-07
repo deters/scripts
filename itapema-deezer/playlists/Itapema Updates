@@ -1,22 +1,30 @@
+select *
+from (
   select
     deezer_id,
     max(music) as music,
     max(artist) as artist,
-    sum(play_rev_ranking) as ranking
+    1 as ranking,
+    min(playdate) as novidade
   from (
+  
     select
       deezer_id,
       id,
       music,
       artist,
       release_date,
-      1/( julianday(date('now')) - julianday(playdate) ) as play_rev_ranking
+      1/( julianday(date('now')) - julianday(playdate) ) as play_rev_ranking,
+      playdate
     from music
     where deezer_id is not null
       and playtime between time('07:00') and time('21:59')
-      and julianday(date('now'), '-2 days') <> julianday(playdate)
   ) x
   group by deezer_id
-  order by ranking + random() desc
-  limit 200
+  order by novidade desc
+  
+)  
+where julianday(date('now', '-30 days')) < julianday(novidade)  
+order by novidade desc  
+  limit 50
 

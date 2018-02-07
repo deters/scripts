@@ -13,10 +13,10 @@
       1/( julianday(date('now')) - julianday(playdate) ) as play_rev_ranking
     from music
     where deezer_id is not null
-      and playtime between time('07:00') and time('21:59')
-      and julianday(date('now'), '-2 days') <> julianday(playdate)
+      and playtime between time('19:00') and time('21:59')
+      and julianday(date('now')) <> julianday(playdate)
   ) x
   group by deezer_id
-  order by ranking + random() desc
-  limit 200
+  order by ranking desc, random()
+  limit 50
 

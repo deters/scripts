@@ -1,0 +1,22 @@
+	  select
+		deezer_id,
+		max(music) as music,
+		max(artist) as artist,
+		sum(play_rev_ranking) as ranking
+	  from (
+		select
+		  deezer_id,
+		  id,
+		  music,
+		  artist,
+		  release_date,
+		  1/( julianday(date('now')) - julianday(playdate) ) as play_rev_ranking
+		from music
+		where deezer_id is not null
+		  and strftime('%H',playtime) = strftime('%H', time('now'))
+		  and julianday(date('now')) <> julianday(playdate)
+	  ) x
+	  group by deezer_id
+	  order by random()
+	  limit 50
+

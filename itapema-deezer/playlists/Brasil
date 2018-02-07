@@ -10,13 +10,14 @@
       music,
       artist,
       release_date,
-      1/( julianday(date('now')) - julianday(playdate) ) as play_rev_ranking
+      1 as play_rev_ranking
     from music
     where deezer_id is not null
-      and playtime between time('07:00') and time('21:59')
-      and julianday(date('now'), '-2 days') <> julianday(playdate)
+      and isrc like 'BR%'
+      and origin = 'Spotify'
   ) x
   group by deezer_id
-  order by ranking + random() desc
+  having ranking >= 1
+  order by ranking
   limit 200
 

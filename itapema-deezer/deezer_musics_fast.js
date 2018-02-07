@@ -19,6 +19,7 @@ let stmt = db.prepare(`
   and music not like '%Itapema%'
   and music not like '%Vinheta%'
   and music not like '%Vh %'
+  and origin <> 'Itapema'
   group by replace(artist, ',', ''), replace(music, ',', '')
   `;
 

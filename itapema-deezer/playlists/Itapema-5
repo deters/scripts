@@ -1,0 +1,21 @@
+    select distinct 
+      deezer_id,
+      id,
+      music,
+      artist,
+      1 as ranking,
+      release_date,
+      playdate,
+      1/( julianday(date('now')) - julianday(playdate) ) as play_rev_ranking
+    from music
+    where deezer_id is not null
+      and playtime between time('07:00') and time('21:59')
+      and playdate = (
+			select playdate
+			from music
+			where playdate is not null
+			order by random()
+			limit 1
+         )
+    order by playtime
+
