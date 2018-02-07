@@ -14,8 +14,11 @@
 			select playdate
 			from music
 			where playdate is not null
-			order by random()
+                        group by playdate
+                        having count(*) > 30
+			order by playdate desc
 			limit 1
+                        offset 2 
          )
     order by playtime
 
