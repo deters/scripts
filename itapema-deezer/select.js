@@ -33,10 +33,11 @@ console.log('update');
 
 db.all(query, [], (err, rows) => {
   console.log(`got ${rows.length} rows`);
-  let order = rows.map((row)=>{
+  let listanova = rows.map((row)=>{
       console.log(`${name} += ${row.ranking} ${row.release_date}, ${row.artist} - ${row.music}  `);
-    return row.deezer_id;
-  }).join(',')
+      return row.deezer_id;
+  })
+  let order = listanova.join(',')
 
   let playlist_promise = deezer.deezer_get_playlist(token,name);
   playlist_promise.then((playlist) => {
@@ -55,20 +56,6 @@ db.all(query, [], (err, rows) => {
       return deezer.deezer_playlist_music_add(token, playlist.id, order)
     })
     .then( () => { return deezer.deezer_playlist_sort(token, playlist.id, order) })
-    // .then( () => { return deezer.deezer_playlist_tracks(token, playlist.id) } )
-    // .then( (tracks) => {
-    //   //console.log(tracks);
-    //   let i = 0;
-    //   let last = tracks.filter((x, i) => {return i >= 100}).map((row)=>{
-    //     return row.id;
-    //   }).join(',')
-    //   if (last != '') {
-    //     deezer.deezer_playlist_tracks_delete(token, playlist.id, last)
-    //     .then((result)=>{
-    //       console.log(`resultado do delete: ${result}`)
-    //     }).catch((err)=>{console.log(`err: ${err}`)});
-    //   }
-    // })
     .catch((err)=>{console.log(`err_ ${name}: ${err}`)});
 
 
