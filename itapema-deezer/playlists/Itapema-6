@@ -18,7 +18,7 @@
                         having count(*) > 30
 			order by playdate desc
 			limit 1
-                        offset 7
+                        offset 6
          )
     order by playtime
 

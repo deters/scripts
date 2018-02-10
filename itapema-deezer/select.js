@@ -28,42 +28,44 @@ let token = credentials.accessToken;
 
 let count = 0;
 
-function updatePlaylist(name, query) {
-console.log('update');
 
-db.all(query, [], (err, rows) => {
-  console.log(`got ${rows.length} rows`);
-  let listanova = rows.map((row)=>{
-      console.log(`${name} += ${row.ranking} ${row.release_date}, ${row.artist} - ${row.music}  `);
-      return row.deezer_id;
-  })
-  let order = listanova.join(',')
-
-  let playlist_promise = deezer.deezer_get_playlist(token,name);
-  playlist_promise.then((playlist) => {
-    console.log(`got playlist ${playlist.id}`)
-
-    deezer.deezer_playlist_tracks(token, playlist.id)
-    .then( (tracks) => {
-      //console.log(tracks);
-      let i = 0;
-      let last = tracks.map((row)=>{return row.id}).join(',')
-      if (last != '') {
-        return deezer.deezer_playlist_tracks_delete(token, playlist.id, last);
-      }
-    })
-    .then( () => {
-      return deezer.deezer_playlist_music_add(token, playlist.id, order)
-    })
-    .then( () => { return deezer.deezer_playlist_sort(token, playlist.id, order) })
-    .catch((err)=>{console.log(`err_ ${name}: ${err}`)});
-
-
-
-  }).catch( console.log );
+function query_musics(query, name) {
+	return new Promise( (resolve, reject) => {
+		db.all(query, [], (err, rows) => {
+			resolve(rows);
+		})
+	});
 }
-);
 
+function updatePlaylist(name, query) {
+	console.log('update');
+
+	
+	let deezer_playlist_promise = deezer.deezer_get_playlist(token,name);
+	let database_musics_promise =  query_musics(query, name)
+	let deezer_musics_promise = deezer_playlist_promise.then( playlist =>  { return deezer.deezer_playlist_tracks(token, playlist.id) });
+	
+	Promise.all([deezer_playlist_promise, database_musics_promise, deezer_musics_promise]).then( ([playlist, database_musics, deezer_musics]) => {
+		let oldmusic = deezer_musics.map((row)=>{return row.id});
+		let newmusic = database_musics.map((row)=>{return row.deezer_id});
+		
+		let to_delete = oldmusic.filter( i=> { return newmusic.indexOf(i) < 0 } );
+		let to_add = newmusic.filter( i=> { return oldmusic.indexOf(i) < 0 } );
+		
+		console.log(name, to_add.length, to_delete.length);
+
+		let music_deleted_promise = deezer.deezer_playlist_tracks_delete(token, playlist.id, to_delete.join(','));
+		let music_added_promise   = deezer.deezer_playlist_music_add(token, playlist.id, to_add.join(','));
+		
+		return Promise.all([music_deleted_promise, music_added_promise]).then(()=>{
+			return deezer.deezer_playlist_sort(token, playlist.id, newmusic)	
+			
+		})		
+	})
+	.then( ()=> { console.log('FIM!'); })
+	.catch( console.log );
+	
+			
 }
 
 
