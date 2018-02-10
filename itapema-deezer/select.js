@@ -11,7 +11,6 @@ fs.readdir(testFolder, (err, files) => {
 	return;
   }
   files.forEach(file => {
-    console.log('Processing '+file);
     fs.readFile(`./playlists/${file}`, 'utf8', function (err,data) {
       if (err) {
         return console.log(err);
@@ -38,9 +37,6 @@ function query_musics(query, name) {
 }
 
 function updatePlaylist(name, query) {
-	console.log('update');
-
-	
 	let deezer_playlist_promise = deezer.deezer_get_playlist(token,name);
 	let database_musics_promise =  query_musics(query, name)
 	let deezer_musics_promise = deezer_playlist_promise.then( playlist =>  { return deezer.deezer_playlist_tracks(token, playlist.id) });
@@ -54,15 +50,11 @@ function updatePlaylist(name, query) {
 		
 		console.log(name, to_add.length, to_delete.length);
 
-		let music_deleted_promise = deezer.deezer_playlist_tracks_delete(token, playlist.id, to_delete.join(','));
-		let music_added_promise   = deezer.deezer_playlist_music_add(token, playlist.id, to_add.join(','));
+		deezer.deezer_playlist_tracks_delete(token, playlist.id, to_delete.join(','))
+		.then( () => { return  deezer.deezer_playlist_music_add    (token, playlist.id, to_add.join(','))} )
+		.then( () => console.log('PLAYLIST '+name+' PROCESSED.'));
 		
-		return Promise.all([music_deleted_promise, music_added_promise]).then(()=>{
-			return deezer.deezer_playlist_sort(token, playlist.id, newmusic)	
-			
-		})		
 	})
-	.then( ()=> { console.log('FIM!'); })
 	.catch( console.log );
 	
 			

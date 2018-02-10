@@ -309,7 +309,9 @@ function deezer_playlist_tracks(token, playlist_id){
 function deezer_playlist_tracks_delete(token, playlist_id, songs){
 	console.log('deezer_playlist_tracks_delete', playlist_id);
 	return new Promise( (resolve, reject) => {
-
+		if (!songs) {
+			resolve();
+		}
                 deezer_get_slot().then( () =>{
 
 
@@ -411,7 +413,12 @@ function sort_playlist(token, playlist_promise) {
 }
 
 function deezer_playlist_music_add(token, playlist_id, music_id) {
+
+	console.log('deezer_playlist_music_add', playlist_id);
 	return new Promise( (resolve, reject) => {
+                if (!music_id) {
+			resolve();
+		}
 		deezer.request(
 			token,
 			{
